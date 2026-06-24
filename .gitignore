@@ -1,0 +1,147 @@
+# Import libraries
+from transformers import pipeline
+import pandas as pd
+
+
+# -------------------------------
+# Load Foundation Models
+# -------------------------------
+
+# Sentiment Analysis Foundation Model
+sentiment_model = pipeline(
+    "sentiment-analysis",
+    model="distilbert-base-uncased-finetuned-sst-2-english"
+)
+
+
+# Document Classification Foundation Model
+classification_model = pipeline(
+    "zero-shot-classification",
+    model="facebook/bart-large-mnli"
+)
+
+
+# -------------------------------
+# Sentiment Analysis Function
+# -------------------------------
+
+def perform_sentiment_analysis(text):
+
+    result = sentiment_model(text)
+
+    label = result[0]["label"]
+    score = result[0]["score"]
+
+    return {
+        "Sentiment": label,
+        "Confidence": round(score,3)
+    }
+
+
+
+# -------------------------------
+# Document Classification Function
+# -------------------------------
+
+def classify_document(text):
+
+    categories = [
+        "Technology",
+        "Finance",
+        "Healthcare",
+        "Sports",
+        "Politics",
+        "Education"
+    ]
+
+
+    result = classification_model(
+        text,
+        candidate_labels=categories
+    )
+
+
+    return {
+        "Category": result["labels"][0],
+        "Confidence": round(result["scores"][0],3)
+    }
+
+
+
+# -------------------------------
+# Main Program
+# -------------------------------
+
+
+documents = [
+
+"""
+The company launched a new AI platform 
+that improves machine learning performance.
+""",
+
+
+"""
+The stock market crashed due to economic problems.
+Investors are worried about financial losses.
+""",
+
+
+"""
+The football team won the championship match
+after an amazing performance.
+"""
+]
+
+
+results=[]
+
+
+for doc in documents:
+
+
+    sentiment = perform_sentiment_analysis(doc)
+
+    category = classify_document(doc)
+
+
+    results.append({
+
+        "Document":doc,
+
+        "Sentiment":
+        sentiment["Sentiment"],
+
+        "Sentiment Score":
+        sentiment["Confidence"],
+
+
+        "Category":
+        category["Category"],
+
+        "Category Score":
+        category["Confidence"]
+
+    })
+
+
+
+# Convert output to dataframe
+
+df = pd.DataFrame(results)
+
+
+print("\nFinal Results\n")
+
+print(df)
+
+
+
+# Save result
+
+df.to_csv(
+    "classification_results.csv",
+    index=False
+)
+
+print("\nResults saved successfully")
